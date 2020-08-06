@@ -3,7 +3,8 @@ function Point(x, y) {
   this.y = y;
 }
 
-function Canvas(width, height) {
+function Model(width, height) {
+  this.lossText = document.getElementById("loss");
   this.canvas = document.getElementById("canvas");
   this.ctx = this.canvas.getContext("2d");
   this.canvas.width = width;
@@ -15,15 +16,16 @@ function Canvas(width, height) {
   this.iter = 0;
 
   // TensorFlow dependant variables
-  this.m = tf.variable(tf.scalar(Math.random())); // Random number to start
+  this.a = tf.variable(tf.scalar(Math.random())); // Random number to start
+  this.b = tf.variable(tf.scalar(Math.random())); // Random number to start
   this.c = tf.variable(tf.scalar(Math.random())); // Random number to start
-  this.learningRate = 0.2;
-  this.optimizer = tf.train.sgd(this.learningRate);
+  this.learningRate = 0.3;
+  this.optimizer = tf.train.adam(this.learningRate);
 }
 
-Canvas.prototype.initialise = function () {
+Model.prototype.initialise = function () {
   this.drawCanvas();
-  this.createPoints();
+  //this.createPoints();
   this.drawPoints();
 
   tf.tidy(() => {
@@ -33,39 +35,39 @@ Canvas.prototype.initialise = function () {
   this.startAnimation();
 }
 
-Canvas.prototype.drawCanvas = function () {
+Model.prototype.drawCanvas = function () {
   this.ctx.fillStyle = "black";
   this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 }
 
-Canvas.prototype.clearCanvas = function () {
+Model.prototype.clearCanvas = function () {
   this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 }
 
-Canvas.prototype.createPoints = function () {
+Model.prototype.createPoints = function () {
   for (i = 0; i < 4; i++) {
     this.addPoint(new Point(Math.random(), Math.random()));
   }
 }
 
-Canvas.prototype.drawPoints = function () {
+Model.prototype.drawPoints = function () {
   for (i = 0; i < this.points.length; i++) {
     this.drawPoint(this.points[i].x * this.canvas.width, this.points[i].y * this.canvas.height);
   }
 }
 
-Canvas.prototype.drawPoint = function (x, y) {
+Model.prototype.drawPoint = function (x, y) {
   this.ctx.beginPath();
   this.ctx.arc(x, y, 5, 0, 2 * Math.PI);
   this.ctx.fillStyle = 'rgb(255, 255, 255)';
   this.ctx.fill();
 }
 
-Canvas.prototype.addPoint = function (point) {
+Model.prototype.addPoint = function (point) {
   this.points.push(point);
 }
 
-Canvas.prototype.iteration = function () {
+Model.prototype.iteration = function () {
   this.iter++
   this.clearCanvas();
   this.drawCanvas();
@@ -75,25 +77,25 @@ Canvas.prototype.iteration = function () {
     this.minimizeLoss();
   });
 
-  this.drawLine();
+  //this.drawLine();
+  this.drawCurve();
 
   //console.log(tf.memory().numTensors);
 
   this.startAnimation();
 }
 
-Canvas.prototype.startAnimation = function() {
-  this.animation = setTimeout(Canvas.prototype.iteration.bind(this), 50);
+Model.prototype.startAnimation = function() {
+  this.animation = setTimeout(Model.prototype.iteration.bind(this), 50);
 }
 
-Canvas.prototype.stopAnimation = function() {
+Model.prototype.stopAnimation = function() {
   window.clearTimeout(this.animation);
 }
 
-
 // ########## TensorFlow Section ##############
 
-Canvas.prototype.getXValues = function () {
+Model.prototype.getXValues = function () {
   let xs = [];
   for (i = 0; i < this.points.length; i++) {
     xs.push(this.points[i].x);
@@ -101,7 +103,7 @@ Canvas.prototype.getXValues = function () {
   return xs
 }
 
-Canvas.prototype.getYValues = function () {
+Model.prototype.getYValues = function () {
   let ys = [];
   for (i = 0; i < this.points.length; i++) {
     ys.push(this.points[i].y);
@@ -109,37 +111,65 @@ Canvas.prototype.getYValues = function () {
   return ys
 }
 
-Canvas.prototype.drawLine = function () {
-  const lineX = [0, 1];
-  const ys = tf.tidy(() => this.predict(lineX));
-  let lineY = ys.dataSync();
-  ys.dispose();
-
-  this.ctx.beginPath();
-  this.ctx.moveTo(lineX[0] * this.canvas.width, lineY[0] * this.canvas.height);
-  this.ctx.lineTo(lineX[1] * this.canvas.width, lineY[1] * this.canvas.height);
-  this.ctx.strokeStyle = '#fff';
-  this.ctx.stroke();
-}
-
-Canvas.prototype.predict = function (x) {
-  const xs = tf.tensor1d(x);
-  const ys = xs.mul(this.m).add(this.c); // y = mx + c
-  return ys;
-}
-
-Canvas.prototype.loss = function(pred, labels) {
-  return pred.sub(labels).square().mean();
-}
-
-Canvas.prototype.minimizeLoss = function () {
+Model.prototype.drawLine = function () {
   if (this.points.length > 0) {
-    const ys = tf.tensor1d(this.getYValues());
-    this.optimizer.minimize(() => this.loss(this.predict(this.getXValues()), ys));
+    const lineX = [0, 1];
+    const ys = tf.tidy(() => this.predict(lineX));
+    let lineY = ys.dataSync();
+    ys.dispose();
+  
+    this.ctx.beginPath();
+    this.ctx.moveTo(lineX[0] * this.canvas.width, lineY[0] * this.canvas.height);
+    this.ctx.lineTo(lineX[1] * this.canvas.width, lineY[1] * this.canvas.height);
+    this.ctx.strokeStyle = '#fff';
+    this.ctx.stroke();
   }
 }
 
-Canvas.prototype.getClickPosition = function (event) {
+Model.prototype.drawCurve = function () {
+  if (this.points.length > 0) {
+    const curveX = [];
+    for (x = 0; x <= 1; x += 0.05) {
+      curveX.push(x);
+    }
+
+    const ys = tf.tidy(() => this.predict(curveX));
+    let curveY = ys.dataSync();
+    ys.dispose();
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(curveX[0] * this.canvas.width, curveY[0] * this.canvas.height);
+
+    for (i = 0; i < curveX.length; i++) {
+      this.ctx.lineTo(curveX[i+1] * this.canvas.width, curveY[i+1] * this.canvas.height);
+    }
+    this.ctx.strokeStyle = '#fff';
+    this.ctx.stroke();
+  }
+}
+
+Model.prototype.predict = function (x) {
+  const xs = tf.tensor1d(x);
+  //const ys = xs.mul(this.a).add(this.b); // y = ax + b
+  const ys = xs.square().mul(this.a).add(xs.mul(this.b)).add(this.c); // y = ax^2 + bx + c
+  return ys;
+}
+
+Model.prototype.loss = function(pred, labels) {
+  return pred.sub(labels).square().mean();
+}
+
+Model.prototype.minimizeLoss = function () {
+  if (this.points.length > 0) {
+    const ys = tf.tensor1d(this.getYValues());
+    this.optimizer.minimize(() => this.loss(this.predict(this.getXValues()), ys));
+
+    const loss = this.loss(this.predict(this.getXValues()), ys).dataSync();
+    this.lossText.innerHTML = `Loss: ${loss}`;
+  }
+}
+
+Model.prototype.getClickPosition = function (event) {
     const rect = this.canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
@@ -148,11 +178,11 @@ Canvas.prototype.getClickPosition = function (event) {
 }
 
 $(document).ready(function () {
-  let canvas = new Canvas(window.innerWidth, window.innerHeight - 56, 15);
+  let model = new Model(window.innerWidth, window.innerHeight - 56, 15);
 
-  canvas.canvas.onclick = function (e) {
-    canvas.getClickPosition(e);
+  model.canvas.onclick = function (e) {
+    model.getClickPosition(e);
   };
 
-  canvas.initialise();
+  model.initialise();
 });
