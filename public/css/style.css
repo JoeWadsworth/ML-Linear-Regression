@@ -1,3 +1,42 @@
+html, body {
+    color: #2C2C2C;
+}
+
+body {
+    min-height: 100%;
+    color: white;
+    background-color: #1e1e2f;
+}
+
+#canvas {
+    display: block; 
+    width: 100%; 
+    height: 480px;
+}
+
+#chart {
+    display: block; 
+    width: 100%; 
+    height: 100%;
+}
+
+.content {
+    padding: 20px 20px 0px 20px;
+    min-height: calc(100vh - 56px);
+}
+
+.card {
+    margin-bottom: 20px;
+}
+
 #loss {
     width: 235px;
+}
+
+.card-canvas .card-body {
+    padding: 0;
+}
+
+.card-details .card-body {
+    height: 220px;
 }

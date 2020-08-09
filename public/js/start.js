@@ -9,8 +9,8 @@ function Model(width, height) {
   this.ctx = this.canvas.getContext("2d");
   this.canvas.width = width;
   this.canvas.height = height;
-  this.width = width
-  this.height = height;
+  // this.width = width
+  // this.height = height;
   this.points = [];
   this.animation;
   this.iter = 0;
@@ -178,7 +178,11 @@ Model.prototype.getClickPosition = function (event) {
 }
 
 $(document).ready(function () {
-  let model = new Model(window.innerWidth, window.innerHeight - 56, 15);
+  let canvas = document.getElementById("canvas");
+  console.log(canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
+  let model = new Model(canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
+
+  
 
   model.canvas.onclick = function (e) {
     model.getClickPosition(e);
