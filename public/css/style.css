@@ -1,11 +1,22 @@
-html, body {
-    color: #2C2C2C;
+body {
+    font-family: "Helvetica", "Arial", sans-serif;
+    background-color: #f7f7f7;
+    min-height: 100%;
 }
 
-body {
-    min-height: 100%;
+.github-link {
+    width: 60px;
+    height: 60px;
+    position: absolute;
+    display: block;
+    top: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.bg-navy {
+    background-color: #183D4E;
     color: white;
-    background-color: #1e1e2f;
 }
 
 #canvas {
